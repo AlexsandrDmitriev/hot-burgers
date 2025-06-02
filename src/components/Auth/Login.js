@@ -1,25 +1,30 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const Login = props => { // Login - функциональный компонент
-  // Внутри классового компонента Login, в методе render или конструкторе
-  console.log('Login props:', this.props);
-  return (
-    <div className='login-container'>
-      <nav className='login'>
-        <h2>Авторизация</h2>
-        <p>Войдите с помощью Github для доступа к админке</p> {/* Обновленный текст */}
-        {/* Убедитесь, что authenticate передается и является функцией */}
-        <button className='github' onClick={() => props.authenticate()}>
-          Войти через Github {/* Обновленный текст кнопки */}
-        </button>
-      </nav>
-    </div>
-  );
-};
+class Login extends React.Component {
+  static propTypes = {
+    authenticate: PropTypes.func.isRequired // authenticate ожидается как обязательная функция-пропс
+  };
 
-Login.propTypes = {
-  authenticate: PropTypes.func.isRequired
-};
+  // Исправляем: используем стрелочную функцию для автоматической привязки 'this'
+  authenticate = () => {
+    this.props.authenticate(); // Теперь this.props будет доступен
+  };
+
+  render() {
+    return (
+      <div className='login-container'>
+        <nav className='login'>
+          <h2>Авторизация</h2>
+          <p>Войдите с помощью Github для доступа к админке</p> {/* Обновленный текст */}
+          {/* Убедитесь, что authenticate передается и является функцией */}
+          <button className='github' onClick={this.authenticate}> {/* Используем привязанный метод */}
+            Войти через Github {/* Обновленный текст кнопки */}
+          </button>
+        </nav>
+      </div>
+    );
+  }
+}
 
 export default Login;
