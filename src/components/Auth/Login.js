@@ -2,6 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const Login = props => { // Login - функциональный компонент
+  // Внутри классового компонента Login, в методе render или конструкторе
+  console.log('Login props:', this.props);
   return (
     <div className='login-container'>
       <nav className='login'>

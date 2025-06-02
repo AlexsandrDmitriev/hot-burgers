@@ -26,6 +26,9 @@ function SignIn({ authenticate, logout, children }) { // Включаем все
     return <Login authenticate={authenticate} />;
   }
 
+  // Внутри функционального компонента SignIn, перед return
+  console.log('SignIn props:', { authenticate, logout, children });
+
   // Пользователь авторизован, рендерим обернутое содержимое (AppWrapper)
   // Используем React.Children.only, так как ожидается только один дочерний элемент
   return React.Children.only(children);
