@@ -4,11 +4,6 @@ import AddBurgerForm from './AddBurgerForm';
 import EditBurgerForm from './EditBurgerForm';
 
 class MenuAdmin extends React.Component {
-  state = {
-    photo: '',
-    user: ''
-  };
-
   static propTypes = {
     burgers: PropTypes.object.isRequired, // Ожидаем объект
     addBurger: PropTypes.func,
@@ -17,20 +12,7 @@ class MenuAdmin extends React.Component {
     loadSampleBurgers: PropTypes.func,
     // Возможно, restaurantId и user также нужны как пропсы для прав доступа
     restaurantId: PropTypes.string,
-    user: PropTypes.object,
-  };
-
-  componentDidMount() {
-    //firebase.auth().onAuthStateChanged(user => {
-    //  if (user) {
-    //    this.authHandler({ user });
-    //  }
-    //});
-  }
-
-  authHandler = async authData => {
-    const { email, photoURL } = authData.user;
-    this.setState({ user: email, photo: photoURL });
+    user: PropTypes.object, // user теперь приходит как пропс
   };
 
   render() {
@@ -38,8 +20,6 @@ class MenuAdmin extends React.Component {
     // Добавляем проверку: если this.props.burgers undefined или null, используем пустой объект {}
     // Это предотвратит ошибку Object.keys() на undefined/null
     const burgers = this.props.burgers || {};
-    const { user, photo } = this.state;
-    const avatar = photo ? photo : '/images/avatar.png';
     return (
       <div className='menu-admin'>
         <h2>Menu management</h2>

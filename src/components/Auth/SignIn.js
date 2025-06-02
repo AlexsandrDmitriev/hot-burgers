@@ -1,4 +1,4 @@
-import { getAuth, GithubAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import React from 'react'; // Импортируем React для React.Children.only
 
