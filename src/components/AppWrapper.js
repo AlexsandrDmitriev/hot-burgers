@@ -1,66 +1,80 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
-import { useObject } from 'react-firebase-hooks/database';
-import { getDatabase, ref } from 'firebase/database';
-import Loader from './Loader';
 import PropTypes from 'prop-types';
+import Loader from './Loader';
+import { getDatabase, ref } from 'firebase/database'; // Импортируем функции Realtime Database
+import { getAuth, GithubAuthProvider, signInWithPopup, signOut } from 'firebase/auth'; // Импортируем функции Auth
+import { useAuthState } from 'react-firebase-hooks/auth'; // Импортируем useAuthState hook
+import { useObject } from 'react-firebase-hooks/database'; // Импортируем useObject hook для данных
 
-function AppWrapper({ children, user, authenticate, ...rest }) {
-  const { restaurantId } = useParams();
+// Функциональный компонент AppWrapper
+const AppWrapper = ({ children, match }) => { // Принимаем children и match из react-router
+  const { restaurantId } = match.params;
+  const auth = getAuth();
   const database = getDatabase();
-  // useObject will initially return [undefined, true, undefined]
-  const [burgersSnapshot, loading, error] = useObject(
-    ref(database, `${restaurantId}/burgers`)
-  );
 
-  // AppWrapper все еще принимает user и authenticate как пропсы,
-  // так как он оборачивается в SignIn на админ-маршруте,
-  // и эти пропсы нужно передать в дочерний элемент (App)
-  //const { user, authenticate } = props;
+  // Состояние аутентификации через useAuthState
+  const [user, loadingAuth, errorAuth] = useAuthState(auth);
 
-  // Определяем значение для пропса burgers, которое всегда будет объектом
-  // Если загрузка завершена и есть данные (которые являются объектом), используем их.
-  // В противном случае (во время загрузки, при ошибке, или если данных нет/они не объект), используем пустой объект {}.
-  let burgersToPass = {};
-  if (!loading && !error && burgersSnapshot && burgersSnapshot.val() !== null && typeof burgersSnapshot.val() === 'object') {
-    burgersToPass = burgersSnapshot.val();
+  // Состояние данных о бургерах через useObject
+  // useObject возвращает snapshot, loading, error
+  const [snapshot, loadingData, errorData] = useObject(ref(database, `${restaurantId}/burgers`));
+  const burgers = snapshot ? snapshot.val() : null; // Извлекаем данные из snapshot
+
+  // Методы аутентификации
+  const authenticate = async () => {
+    console.log('Authenticating...');
+    const authProvider = new GithubAuthProvider();
+    try {
+      await signInWithPopup(auth, authProvider);
+    } catch (error) {
+      console.error('GitHub Auth Error:', error);
+    }
+  };
+
+  const logout = async () => {
+    console.log('Logging out...');
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error('Logout Error:', error);
+    }
+  };
+
+  // Обработка состояний загрузки и ошибок
+  if (loadingAuth || loadingData) {
+    return <Loader />;
   }
 
-
-  // --- Обработка состояний ---
-
-  if (error) {
-    console.error("Ошибка загрузки бургеров из Firebase:", error);
-    return <div>Error loading data. Please try again later.</div>;
+  if (errorAuth || errorData) {
+    console.error('Error loading data or auth state:', errorAuth || errorData);
+    return <p>Ошибка загрузки данных. Пожалуйста, попробуйте позже.</p>;
   }
 
-  if (loading) {
-    // While loading, render the Loader.
-    // Pass burgersToPass (which is {}) to Loader as well for consistency, though Loader might not use it.
-     return <Loader user={user} authenticate={authenticate} burgers={burgersToPass} {...rest} />;
+  // Когда данные загружены и нет ошибок, рендерим дочерний компонент
+  // Передаем дочернему компоненту данные (burgers) и состояние аутентификации (user, authenticate, logout)
+  // React.Children.only ожидает один дочерний элемент
+  // Клонируем дочерний элемент, чтобы передать ему нужные пропсы
+  // Убедимся, что burgers - это объект, даже если данные из Firebase null (пусто)
+  const dataProps = {
+    burgers: burgers || {}, // Передаем объект бургеров (пустой или с данными)
+    user: user, // Передаем объект пользователя (или null)
+    authenticate: authenticate, // Передаем функцию аутентификации
+    logout: logout, // Передаем функцию выхода
+    match: match // Также передаем match пропсы, если они нужны дочерним элементам
+  };
+
+  // Убеждаемся, что есть ровно один дочерний элемент и клонируем его с добавленными пропсами
+  if (React.Children.count(children) !== 1) {
+      console.error('AppWrapper expects exactly one child.', children);
+      return <p>Component configuration error.</p>; // Или другой способ обработки ошибки
   }
 
-  // If loading is complete and there's no error, clone and render the child element.
-  // Pass the burgers data (burgersToPass, which now contains loaded data or {})
-  const childElement = React.Children.only(children);
-
-  const elementToReturn = React.cloneElement(childElement, {
-     burgers: burgersToPass, // Pass burgers (guaranteed to be an object)
-     user: user,
-     authenticate: authenticate,
-     logout: rest.logout, // Explicitly pass logout from rest props if it exists
-     ...rest // Pass other props (like match)
-  });
-
-  return elementToReturn;
-}
+  return React.cloneElement(React.Children.only(children), dataProps);
+};
 
 AppWrapper.propTypes = {
-  children: PropTypes.element.isRequired,
-  user: PropTypes.object,
-  authenticate: PropTypes.func,
-  // logout might come as a prop if AppWrapper is wrapped by SignIn
-  logout: PropTypes.func, // Keep logout as optional in AppWrapper's propTypes
+  children: PropTypes.element.isRequired, // AppWrapper ожидает ровно один React элемент как дочерний
+  match: PropTypes.object.isRequired // match пропс от react-router
 };
 
 export default AppWrapper;

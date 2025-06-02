@@ -6,6 +6,7 @@ import Login from './Login';
 
 // Функциональный компонент SignIn
 function SignIn({ authenticate, logout, children }) { // Включаем все ожидаемые пропсы
+  console.log('SignIn props received:', { authenticate, logout, children }); // <-- Добавляем это логирование
   const auth = getAuth();
   const [user, loading, error] = useAuthState(auth); // Получаем состояние пользователя, загрузки и ошибки
 
@@ -25,9 +26,6 @@ function SignIn({ authenticate, logout, children }) { // Включаем все
     // Передаем authenticate пропсу Login компоненту
     return <Login authenticate={authenticate} />;
   }
-
-  // Внутри функционального компонента SignIn, перед return
-  console.log('SignIn props:', { authenticate, logout, children });
 
   // Пользователь авторизован, рендерим обернутое содержимое (AppWrapper)
   // Используем React.Children.only, так как ожидается только один дочерний элемент
